@@ -1,0 +1,390 @@
+---
+openapi: 3.0.0
+info:
+  title: Social network API
+  description: API for fake social network for OTUS homework
+  contact:
+    email: turneps403@mail.ru
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/turneps403/OtusHWASocialNetwork/1.0.0
+  description: it'll be a heroku server
+security:
+- cookieAuth: []
+paths:
+  /auth:
+    post:
+      summary: simple authentication by login and password
+      description: authentication
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/auth_body'
+        required: true
+      responses:
+        "200":
+          description: |
+            successfully authenticated.
+            the session ID is returned in a cookie named `secookie`. You need to include this cookie in subsequent requests.
+          headers:
+            Set-Cookie:
+              style: simple
+              explode: false
+              schema:
+                type: string
+                example: secookie=foobar; Path=/; HttpOnly
+        "400":
+          description: invalid request
+        "429":
+          description: too many requests
+      security: []
+  /user:
+    get:
+      description: users profile
+      parameters:
+      - name: uID
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "404":
+          description: user not found
+  /user/friends:
+    get:
+      description: list of users friends profiles
+      parameters:
+      - name: uID
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      - name: offset
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friend'
+        "404":
+          description: user not found
+  /register:
+    post:
+      description: main register form here
+      requestBody:
+        description: creating new profile
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201'
+        "400":
+          description: bad request
+        "429":
+          description: too many requests
+  /user/friends/rquests/send:
+    post:
+      description: send request to future friends
+      parameters:
+      - name: uID
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/rquests_send_body'
+        required: false
+      responses:
+        "200":
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "404":
+          description: user not found
+  /user/friends/rquests/accept:
+    get:
+      description: accept friends request with rID
+      parameters:
+      - name: rID
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: request was accepted
+        "404":
+          description: user not found
+  /user/friends/rquests/decline:
+    get:
+      description: decline friends request with rID
+      parameters:
+      - name: rID
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: request was declined
+        "404":
+          description: user not found
+  /user/friends/rquests/my:
+    get:
+      description: list of my friends requests
+      parameters:
+      - name: offset
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: next page of friends request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FriendReq'
+  /user/friends/rquests:
+    get:
+      description: list of friends requests
+      parameters:
+      - name: offset
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 0
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          minimum: 1
+          type: integer
+          default: 20
+      responses:
+        "200":
+          description: next page of friends request
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FriendReq'
+components:
+  schemas:
+    User:
+      required:
+      - age
+      - firstName
+      - secondName
+      - sex
+      - town
+      type: object
+      properties:
+        uID:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          maximum: 100
+          type: string
+          example: Jhon
+        secondName:
+          maximum: 100
+          type: string
+          example: Doe
+        sex:
+          maximum: 4
+          minimum: 0
+          type: integer
+          format: byte
+          example: 1
+        age:
+          type: integer
+          format: byte
+          example: 20
+        town:
+          $ref: '#/components/schemas/Town'
+        interes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interes'
+    Town:
+      required:
+      - name
+      type: object
+      properties:
+        tID:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          maximum: 100
+          type: string
+          example: Moscow
+    Interes:
+      required:
+      - name
+      type: object
+      properties:
+        iID:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          maximum: 100
+          type: string
+          example: Boxing
+    Friend:
+      required:
+      - ftime
+      - user
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        ftime:
+          type: integer
+          format: int32
+          example: 1633637105
+    FriendReq:
+      required:
+      - text
+      - uID
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        rtime:
+          type: integer
+          format: int32
+          example: 1633637105
+        text:
+          maximum: 120
+          type: string
+          example: Hi bro, let's be friends!
+    auth_body:
+      required:
+      - login
+      - password
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+    inline_response_201:
+      type: object
+      properties:
+        uID:
+          type: integer
+          format: int64
+          example: 1
+    rquests_send_body:
+      properties:
+        text:
+          type: string
+    inline_response_200:
+      type: object
+      properties:
+        rID:
+          type: integer
+          format: int64
+          example: 1
+  parameters:
+    offsetParam:
+      name: offset
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        minimum: 0
+        type: integer
+    limitParam:
+      name: limit
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        maximum: 50
+        minimum: 1
+        type: integer
+        default: 20
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: secookie
+      in: cookie
